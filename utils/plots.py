@@ -1,7 +1,6 @@
 import numpy as np
 
 import random
-#from scipy.misc import imresize
 
 import pandas as pd
 from tqdm import tqdm
@@ -12,6 +11,7 @@ import gc
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from PIL import Image
+from skimage.transform import resize
 
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.linear_model import LogisticRegression
@@ -115,9 +115,6 @@ def plot_dataset(X, y, images=None, labels=None, gray=False, save=None, y_origin
     
     x_min, x_max = np.min(X, 0), np.max(X, 0)
     X = (X - x_min) / (x_max - x_min)
-    #if save is not None:
-        #plt.figure(figsize=(27,18), dpi=600)
-    #else:
     fig = plt.figure(figsize=(27,18), dpi=100)
     ax = plt.subplot(111)
 
@@ -178,7 +175,7 @@ def plot_samples(samples, scale=10, save=None):
     fig_width = int(im.shape[0] * scale)
     fig_height = int(im.shape[1] * scale)
 
-    im = np.array(Image.fromarray(im).resize((fig_width, fig_height)))
+    im = resize(im, (fig_width, fig_height), anti_aliasing=True)
 
     fig = plt.figure(dpi=150)
     ax = plt.subplot(111)
