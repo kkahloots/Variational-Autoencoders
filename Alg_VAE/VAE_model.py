@@ -247,30 +247,36 @@ class VAEModel(BaseModel):
 
     def interpolate(self, input1, input2):
 
-        w1 = self.encode(input1)
-        w2 = self.encode(input2)
+        z1 = self.encode(input1)
+        z2 = self.encode(input2)
 
         decodes = defaultdict(list)
-        for idx, ratio in enumerate(da.linspace(0, 1, 10)):
+        for idx, ratio in enumerate(np.linspace(0, 1, 10)):
             decode = dict()
-            w = da.stack([self.slerp(ratio, r1, r2) for r1, r2 in zip(w1, w2)])
-            w_decode = self.decode(w)
+            z = np.stack([self.slerp(ratio, r1, r2) for r1, r2 in zip(z1, z2)])
+            z_decode = self.decode(z)
 
-            for i in range(w_decode.shape[0]):
-                decode[i] = [w_decode[i]]
+            for i in range(z_decode.shape[0]):
+                try:
+                    decode[i] = [z_decode[i].compute()]
+                except:
+                    decode[i] = [z_decode[i]]
 
-            for i in range(w_decode.shape[0]):
+            for i in range(z_decode.shape[0]):
                 decodes[i] = decodes[i] + decode[i]
 
         imgs = []
 
         for idx in decodes:
             l = []
-            l += [input1[idx:idx+1][0]]
+
+            l += [input1[idx:idx + 1][0]]
             l += decodes[idx]
-            l += [input2[idx:idx+1][0]]
+            l += [input2[idx:idx + 1][0]]
+
             imgs.append(l)
         del decodes
+
         return imgs
 
 
