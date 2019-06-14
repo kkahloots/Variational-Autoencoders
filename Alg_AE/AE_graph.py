@@ -1,4 +1,4 @@
-"""VAE_graph.py: Tensorflow Graph for the Autoencoder"""
+"""AE_graph.py: Tensorflow Graph for the Autoencoder"""
 __author__      = "Khalid M. Kahloot"
 __copyright__   = "Copyright 2019, Only for professionals"
 
@@ -11,7 +11,7 @@ import utils.constants as const
 from networks.dense_net import DenseNet
 
 '''
-This is the Main VAEGraph.
+This is the Main AEGraph.
 '''
 class AEGraph(BaseGraph):
     def __init__(self, network_params, act_out=tf.nn.softplus,

@@ -1,4 +1,4 @@
-""" VAECNN_graph.py: Tensorflow CNN Graph for the Autoencoder """
+""" AECNN_graph.py: Tensorflow CNN Graph for the Autoencoder """
 __author__      = "Khalid M. Kahloot"
 __copyright__   = "Copyright 2019, Only for professionals"
 
