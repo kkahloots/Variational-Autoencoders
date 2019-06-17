@@ -5,7 +5,7 @@
 !pip install -U -q hdbscan
 !pip install -U -q dask_ml
 
-!git clone https://github.com/kkahloots/Autoencoders.git
+!git clone https://github.com/kkahloots/Variational-Autoencoders.git
 !mv ./Autoencoders/* ./
 !mkdir experiments
 
