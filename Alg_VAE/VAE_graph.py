@@ -158,12 +158,12 @@ class VAEGraph(BaseGraph):
     ------------------------------------------------------------------------------
                                      LOSSES
     ------------------------------------------------------------------------------ 
-    '''    
+    '''
     
     def create_loss_optimizer(self):
         print('[*] Defining Loss Functions and Optimizer...')
         with tf.name_scope('reconstruct'):
-            self.reconstruction = (1/self.sigma) * self.get_ell(self.x_batch_flat, self.decoder_mean_flat)
+            self.reconstruction =   self.get_ell(self.x_batch_flat, self.decoder_mean_flat)
             #self.reconstruction = (0.5 / self.sigma) * self.get_ell(self.x_batch_flat, self.decoder_x_flat)
             #self.reconstruction = -(0.5/self.sigma) * tf.reduce_sum(tf.square(self.decoder_x_flat- self.x_batch_flat), 1)
         self.loss_reconstruction_m = tf.reduce_mean(self.reconstruction)
