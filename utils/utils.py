@@ -1,9 +1,8 @@
-from __future__ import division
 import math
 import random
 import pprint
 import scipy.misc
-# import numpy as da
+import numpy as np
 import dask.array as da
 import dask.dataframe as dd
 from time import gmtime, strftime
@@ -33,7 +32,7 @@ from scipy.io import loadmat
 '''  ------------------------------------------------------------------------------
                                     DATA METHODS
  ------------------------------------------------------------------------------ '''
-from sklearn.model_selection import train_test_split
+from dask_ml.model_selection import train_test_split
 
 scalar = None
 
@@ -73,6 +72,7 @@ def prepare_dataset(X):
 def process_data(X, y=None, test_size=0.20, dummies=False):
     if y is None:
         y = da.ones(X.shape[0])
+    y_uniqs = np.unique(y)
 
     len_ = X.shape[0]
     X = prepare_dataset(X)
@@ -94,14 +94,28 @@ def process_data(X, y=None, test_size=0.20, dummies=False):
     train_dataset = Dataset(X_train, y_train)
     test_dataset = Dataset(X_test, y_test)
 
+
     samples = list()
     for _ in range(10):
-        for y_uniq in da.unique(train_dataset.labels):
-            samples.append(train_dataset.x[train_dataset.labels == y_uniq][
-                               random.randint(0, len(train_dataset.x[train_dataset.labels == y_uniq]) - 1)])
-
-    train_dataset.samples = da.array(samples)
+        for y_uniq in y_uniqs:
+            sample = list()
+            for xa, ya in zip(chunks(train_dataset.x, 10),chunks(train_dataset.labels, 10)):
+                try:
+                    sample.append(da.array([xa[ya == y_uniq][random.randint(0, len(xa[ya == y_uniq]) - 1)]]))
+                    if len(sample) >= 10:
+                        break
+                except:
+                    pass
+                samples += sample
+    train_dataset.samples = da.vstack(samples)
+    print('Sample dataset shape: ', train_dataset.samples.shape)
     return train_dataset, test_dataset
+
+
+def chunks(l, n):
+    """Yield successive n-sized chunks from l."""
+    for i in range(0, len(l), n):
+        yield l[i:i + n]
 
 
 def merge_datasets(data, data_dim, train_size, valid_size=0):

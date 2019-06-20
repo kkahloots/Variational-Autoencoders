@@ -15,7 +15,7 @@ from skimage.transform import resize
 
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.linear_model import LogisticRegression
-from sklearn.preprocessing import LabelBinarizer
+
 from sklearn.decomposition import PCA
 from sklearn.cross_decomposition import CCA
 from sklearn.metrics import accuracy_score
@@ -167,11 +167,11 @@ def plot_dataset(X, y, images=None, labels=None, gray=False, save=None, y_origin
     del X, y, fig, ax
  
     gc.collect()
-    
+
 def plot_samples(samples, scale=10, save=None):
-   
+
     im = merge(samples, (10,10))
-    
+
     fig_width = int(im.shape[0] * scale)
     fig_height = int(im.shape[1] * scale)
 
@@ -182,7 +182,7 @@ def plot_samples(samples, scale=10, save=None):
     plt.imshow(im)
     for item in [fig, ax]:
         item.patch.set_visible(False)
-    plt.axis('off') 
+    plt.axis('off')
 
     if save is not None:
         print('Saving Image ', save)
@@ -200,7 +200,7 @@ def pick_n(X, n):
     
 def merge(images, size):
     h, w = images.shape[1], images.shape[2]
-    #images = pick_n(images, 100)
+    images = pick_n(images, 100)
     if (images.shape[3] in (3,4)):
         c = images.shape[-1:][0]
         img = np.zeros((h * size[0], w * size[1], c))
