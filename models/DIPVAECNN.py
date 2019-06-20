@@ -1,7 +1,6 @@
-"""DIPVAE.py:  Autoencoder methods"""
+"""AECNN.py:  CNN Autoencoder model"""
 __author__      = "Khalid M. Kahloot"
 __copyright__   = "Copyright 2019, Only for professionals"
-
 
 import os
 import tensorflow as tf
@@ -12,33 +11,30 @@ sys.path.append('..')
 from .AE_BASE import AE_BASE
 import utils.utils as utils
 import utils.constants as const
-from sklearn.cluster import MiniBatchKMeans
-import hdbscan
 
-class AE(AE_BASE):
+class DIPVAECNN(AE_BASE):
     def __init__(self, *argz, **kwrds):
-        AE_BASE.__init__(self, *argz, **kwrds)
-        self.config.model_name = 'AE'
-        self.config.model_type = const.AE
+        super(DIPVAECNN, self).__init__(*argz, **kwrds)
+        self.config.model_name = 'DIPVAECNN'
+        self.config.model_type = const.DIPVAECNN
         self.setup_logging()
-
         
     def _build(self):
-       
         '''  ---------------------------------------------------------------------
                             COMPUTATION GRAPH (Build the model)
         ---------------------------------------------------------------------- '''
-        from Alg_AE.AE_model import AEModel
-        self.model = AEModel(self.network_params, act_out=utils.softplus_bias,
-                             transfer_fct=tf.nn.relu, learning_rate=self.config.l_rate,
-                             kinit=tf.contrib.layers.xavier_initializer(),
-                             batch_size=self.config.batch_size, dropout=self.config.dropout, batch_norm=self.config.batch_norm,
-                             epochs=self.config.epochs, checkpoint_dir=self.config.checkpoint_dir,
-                             summary_dir=self.config.summary_dir, result_dir=self.config.results_dir,
-                             restore=self.flags.restore, plot=self.flags.plot, clustering=self.flags.clustering, colab=self.flags.colab, model_type=self.config.model_type)
-        print('building DIPVAE Model...')
+        from Alg_DIPVAE.DIPVAE_model import DIPVAEModel
+        self.model = DIPVAEModel(self.network_params, act_out=utils.softplus_bias,
+                                 lambda_od=self.config.lambda_od, lambda_factor=self.config.lambda_d,
+                                 dip_type=self.config.dip_type,
+                                 transfer_fct=tf.nn.relu, learning_rate=self.config.l_rate,
+                                 kinit=tf.contrib.layers.xavier_initializer(),
+                                 batch_size=self.config.batch_size, dropout=self.config.dropout, batch_norm=self.config.batch_norm,
+                                 epochs=self.config.epochs, checkpoint_dir=self.config.checkpoint_dir,
+                                 summary_dir=self.config.summary_dir, result_dir=self.config.results_dir,
+                                 restore=self.flags.restore, plot=self.flags.plot, model_type=self.config.model_type)
+        print('building DIP VAE CNN Model...')
         print('\nNumber of trainable paramters', self.model.trainable_count)
-        
     
     def animate(self):
         return self.model.animate()
@@ -69,16 +65,4 @@ class AE(AE_BASE):
                                          DATA PROCESSING
         ------------------------------------------------------------------------------ '''           
         inputs = utils.prepare_dataset(inputs) 
-        return self.model.reconst_loss(inputs)
-
-    def do_clustering(self, x, alg='kmeans'):
-        w = self.encode(x)
-        if alg=='kmeans':
-            clustering = MiniBatchKMeans(verbose=True)
-            y_pred = clustering.fit_predict(w)
-        else:
-            clustering = hdbscan.HDBSCAN(min_cluster_size=50, gen_min_span_tree=False)
-            clustering = clustering.fit(w)
-            y_pred = clustering.labels_
-        del clustering, w
-        return y_pred
+        return self.model.reconst_loss(inputs)        

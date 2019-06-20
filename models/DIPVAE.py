@@ -15,11 +15,11 @@ import utils.constants as const
 from sklearn.cluster import MiniBatchKMeans
 import hdbscan
 
-class AE(AE_BASE):
+class DIPVAE(AE_BASE):
     def __init__(self, *argz, **kwrds):
         AE_BASE.__init__(self, *argz, **kwrds)
-        self.config.model_name = 'AE'
-        self.config.model_type = const.AE
+        self.config.model_name = 'DIPVAE'
+        self.config.model_type = const.DIPVAE
         self.setup_logging()
 
         
@@ -28,15 +28,17 @@ class AE(AE_BASE):
         '''  ---------------------------------------------------------------------
                             COMPUTATION GRAPH (Build the model)
         ---------------------------------------------------------------------- '''
-        from Alg_AE.AE_model import AEModel
-        self.model = AEModel(self.network_params, act_out=utils.softplus_bias,
-                             transfer_fct=tf.nn.relu, learning_rate=self.config.l_rate,
-                             kinit=tf.contrib.layers.xavier_initializer(),
-                             batch_size=self.config.batch_size, dropout=self.config.dropout, batch_norm=self.config.batch_norm,
-                             epochs=self.config.epochs, checkpoint_dir=self.config.checkpoint_dir,
-                             summary_dir=self.config.summary_dir, result_dir=self.config.results_dir,
-                             restore=self.flags.restore, plot=self.flags.plot, clustering=self.flags.clustering, colab=self.flags.colab, model_type=self.config.model_type)
-        print('building DIPVAE Model...')
+        from Alg_DIPVAE.DIPVAE_model import DIPVAEModel
+        self.model = DIPVAEModel(network_params=self.network_params, act_out=utils.softplus_bias,
+                              lambda_od=self.config.lambda_od, lambda_factor= self.config.lambda_factor, dip_type=self.config.dip_type,
+                              transfer_fct=tf.nn.relu, learning_rate=self.config.l_rate,
+                              kinit=tf.contrib.layers.xavier_initializer(),
+                              batch_size=self.config.batch_size, dropout=self.config.dropout, batch_norm=self.config.batch_norm,
+                              epochs=self.config.epochs, checkpoint_dir=self.config.checkpoint_dir,
+                              summary_dir=self.config.summary_dir, result_dir=self.config.results_dir,
+                              restore=self.flags.restore, plot=self.flags.plot, clustering=self.flags.clustering, colab=self.flags.colab,
+                              model_type=self.config.model_type)
+        print('building DIP VAE Model...')
         print('\nNumber of trainable paramters', self.model.trainable_count)
         
     
