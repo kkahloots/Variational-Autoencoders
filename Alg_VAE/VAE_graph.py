@@ -1,4 +1,4 @@
-"""VAE_graph.py: Tensorflow Graph for the VAutoencoder"""
+"""KMVAE_graph.py: Tensorflow Graph for the VAutoencoder"""
 __author__      = "Khalid M. Kahloot"
 __copyright__   = "Copyright 2019, Only for professionals"
 
@@ -11,7 +11,7 @@ import utils.constants as const
 from networks.dense_net import DenseNet
 
 '''
-This is the Main VAEGraph.
+This is the Main KMVAEGraph.
 '''
 class VAEGraph(BaseGraph):
     def __init__(self, network_params, act_out=tf.nn.softplus, sigma=0.001,
@@ -67,7 +67,7 @@ class VAEGraph(BaseGraph):
         print('\n[*] Defining encoder...')
         
         with tf.variable_scope('encoder_mean', reuse=self.reuse):
-            Qz_x_mean = self.create_encoder(input_=self.x_batch_flat,
+            Qw_x_mean = self.create_encoder(input_=self.x_batch_flat,
                             hidden_dim=self.hidden_dim, 
                             output_dim=self.latent_dim, 
                             num_layers=self.num_layers, 
@@ -78,7 +78,7 @@ class VAEGraph(BaseGraph):
                             bias_init=self.bias_init,
                             drop_rate=self.dropout)
         
-            self.encoder_mean = Qz_x_mean.output
+            self.encoder_mean = Qw_x_mean.output
 
         with tf.variable_scope('encoder_var', reuse=self.reuse):
             Qz_x_var = self.create_encoder(input_=self.x_batch_flat,
