@@ -1,4 +1,5 @@
 import dask.array as da
+from dask import delayed
 import numpy as np
 import dask
 
@@ -38,10 +39,56 @@ class Dataset:
         else:
             self._idx_vector = da.array(range(self._ndata))
 
+    @delayed
     def shuffle_data(self, idx):
         self._x = self._x[idx]
         self._labels = self._labels[idx]
-    
+        if hasattr(self, 'p'):
+            self.p = self.p[idx]
+
+    def next_batch_p(self, batch_size, shuffle=True, with_p=False):
+        start = self._idx_batch
+        if start == 0:
+            if (shuffle):
+                idx = da.arange(0, self._ndata)  # get all possible indexes
+                np.random.shuffle(idx.compute())  # shuffle indexe
+                self.shuffle_data(idx)
+        # go to the next batch
+        if start + batch_size > self._ndata:
+            rest_ndata = self._ndata - start
+
+            x_rest_part = self._x[start:self._ndata]
+            p_rest_part = self.p[start:self._ndata]
+
+            if (shuffle):
+                idx0 = da.arange(0, self._ndata)  # get all possible indexes
+                np.random.shuffle(idx0.compute())  # shuffle indexes
+                self.shuffle_data(idx0)
+
+            start = 0
+            # avoid the case where the #sample != integar times of batch_size
+            self._idx_batch = batch_size - rest_ndata
+            end = self._idx_batch
+
+            x_new_part = self._x[start:end]
+            p_new_part = self.p[start:end]
+
+            if not with_p:
+                yield da.concatenate((x_rest_part, x_new_part), axis=0)
+            else:
+                yield da.concatenate((x_rest_part, x_new_part), axis=0), \
+                      da.concatenate((p_rest_part, p_new_part), axis=0)
+
+        else:
+            self._idx_batch += batch_size
+            end = self._idx_batch
+
+        if not with_p:
+            yield self._x[start:end]
+        else:
+            yield self._x[start:end], self.p[start:end]
+
+
     def next_batch(self, batch_size, shuffle=True, with_labels=False):
         start = self._idx_batch
         if start == 0:
