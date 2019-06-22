@@ -1,21 +1,18 @@
 import math
 import random
-import pprint
-import scipy.misc
+
 import numpy as np
 import dask.array as da
+from dask import delayed
 import dask.dataframe as dd
-from time import gmtime, strftime
-from six.moves import xrange
-import matplotlib.pyplot as plt
-# import pandas as pd
+from time import strftime
 
-import re
+
+
 import os
 import shutil
-import argparse
 import time
-import gzip
+
 
 import tensorflow as tf
 from sklearn.preprocessing import MinMaxScaler
@@ -27,7 +24,6 @@ sys.path.append('..')
 
 from utils.dataset import Dataset
 
-from scipy.io import loadmat
 
 '''  ------------------------------------------------------------------------------
                                     DATA METHODS
@@ -82,6 +78,20 @@ def process_data(X, y=None, test_size=0.20, dummies=False):
 
     shape_ = list(X.shape[1:])
 
+    samples = list()
+    for _ in range(10):
+        for y_uniq in y_uniqs:
+            sample = list()
+            for xa, ya in zip(chunks(X, 10),chunks(y, 10)):
+                try:
+                    sample.append([xa[ya == y_uniq][random.randint(0, len(xa[ya == y_uniq]) - 1)]])
+                    if len(sample) >= 500:
+                        break
+                except:
+                    pass
+            samples += sample
+    samples = da.vstack(samples)
+
     X_train, X_test, y_train, y_test = train_test_split(X.flatten().reshape(len_, -1), y, test_size=test_size,
                                                         random_state=4891)
 
@@ -94,20 +104,7 @@ def process_data(X, y=None, test_size=0.20, dummies=False):
     train_dataset = Dataset(X_train, y_train)
     test_dataset = Dataset(X_test, y_test)
 
-
-    samples = list()
-    for _ in range(10):
-        for y_uniq in y_uniqs:
-            sample = list()
-            for xa, ya in zip(chunks(train_dataset.x, 10),chunks(train_dataset.labels, 10)):
-                try:
-                    sample.append(da.array([xa[ya == y_uniq][random.randint(0, len(xa[ya == y_uniq]) - 1)]]))
-                    if len(sample) >= 10:
-                        break
-                except:
-                    pass
-                samples += sample
-    train_dataset.samples = da.vstack(samples)
+    train_dataset.samples = samples
     print('Sample dataset shape: ', train_dataset.samples.shape)
     return train_dataset, test_dataset
 
