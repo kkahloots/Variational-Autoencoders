@@ -17,8 +17,8 @@ import tensorflow as tf
 import numpy as np
 import dask.array as da
 
-from .BetaVAE_graph import BetaVAEGraph
-from .BetaVAECNN_graph import BetaVAECNNGraph
+from .BetaTCVAE_graph import BetaTCVAEGraph
+from .BetaTCVAECNN_graph import BetaTCVAECNNGraph
 
 from utils.logger import Logger
 from utils.early_stopping import EarlyStopping
@@ -35,8 +35,7 @@ import hdbscan
 from dask_ml.metrics import accuracy_score
 from utils.plots import plot_dataset, plot_dataset3d, plot_samples, merge, resize_gif
 
-class BetaVAEModel(BaseModel):
-    #TODO Please confirm that the beta value in AE_BASE is correct or i should use the one in disentanglement _lib
+class BetaTCVAEModel(BaseModel):
     def __init__(self, network_params, act_out=tf.nn.softplus, sigma=0.001,beta=0.6 ,
                  transfer_fct= tf.nn.relu, learning_rate=1e-5,
                  kinit=tf.contrib.layers.xavier_initializer(), batch_size=32,
@@ -67,11 +66,11 @@ class BetaVAEModel(BaseModel):
         self.graph = tf.Graph()
         with self.graph.as_default():
             if(model_type == const.VAE):
-                self.model_graph = BetaVAEGraph(network_params=network_params, act_out=act_out,sigma=sigma,
+                self.model_graph = BetaTCVAEGraph(network_params=network_params, act_out=act_out,sigma=sigma,
                                             transfer_fct=transfer_fct, learning_rate=learning_rate, kinit=kinit,
                                             batch_size=batch_size, reuse=False)
             if(model_type == const.VAECNN):
-                self.model_graph = BetaVAECNNGraph(network_params=network_params, act_out=act_out, sigma=sigma,
+                self.model_graph = BetaTCVAECNNGraph(network_params=network_params, act_out=act_out, sigma=sigma,
                                                    transfer_fct=transfer_fct, learning_rate=learning_rate, kinit=kinit,
                                                    batch_size=batch_size, reuse=False)
 
