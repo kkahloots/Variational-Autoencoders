@@ -25,14 +25,14 @@ class AE_BASE():
     
     def __init__(self, dataset_name, alpha=1, beta=0.6, gamma=1, sigma=0.001, l2=1e-6, \
                        latent_dim=10, hidden_dim=100, num_layers=3,epochs=100, batch_size=32, \
-                       checkpoint_dir = '', summary_dir='', result_dir='', log_dir='', \
+                       checkpoint_dir = 'checkpoints', summary_dir='summary', result_dir='result', log_dir='log', \
                        dropout=0.2, batch_norm=True, l_rate=1e-05, restore=False, plot=False, \
-                       clustering=False, colab=False, colabpath=''):
+                       clustering=False, colab=False, colabpath='',revision_hash=''):
         args=dict()
         args['model_type']=0
         args['model_name']='AE'
         args['dataset_name']=dataset_name
-        
+        args['revision_hash'] = revision_hash
         args['alpha']=alpha
         args['beta']=beta
         args['gamma']=gamma
@@ -63,33 +63,56 @@ class AE_BASE():
         self.colabpath = colabpath
 
         self.config = utils.Config(args)
-        
+        self.isBuilt = False;
+
     def setup_logging(self):        
         self.experiments_root_dir = 'experiments'
         self.config.model_name = const.get_model_name(self.config.model_name, self.config)
-        self.config.summary_dir = os.path.join(self.experiments_root_dir+"/"+self.config.log_dir+"/", self.config.model_name)
-        self.config.checkpoint_dir = os.path.join(self.experiments_root_dir+"/"+self.config.checkpoint_dir+"/", self.config.model_name)
-        self.config.results_dir = os.path.join(self.experiments_root_dir+"/"+self.config.result_dir+"/", self.config.model_name)
+
+        self.config.summary_dir = os.path.join(self.experiments_root_dir+"/"+ self.config.model_name+"_"+self.config.revision_hash+"/",self.config.log_dir)
+        self.config.checkpoint_dir = os.path.join(self.experiments_root_dir+"/"+self.config.model_name+"_"+self.config.revision_hash+"/", self.config.checkpoint_dir)
+        self.config.results_dir = os.path.join(self.experiments_root_dir+"/"+self.config.model_name+"_"+self.config.revision_hash+"/", self.config.result_dir)
 
         #Flags
-        flags_list = ['train', 'restore', 'plot', 'clustering', 'early_stopping', 'colab']
+        flags_list = ['train', 'restore', 'plot', 'clustering', 'early_stopping', 'colab','revision_hash']
         self.flags = utils.Config({ your_key: self.config.__dict__[your_key] for your_key in flags_list})
         
         # create the experiments dirs
         utils.create_dirs([self.config.summary_dir, self.config.checkpoint_dir, self.config.results_dir])
         utils.save_args(self.config.__dict__, self.config.summary_dir)
- 
-    def fit(self, X, y=None):
-        '''  ------------------------------------------------------------------------------
-                                         DATA PROCESSING
-        ------------------------------------------------------------------------------ '''
-            
+
+    def build(self,X,y=None):
         print('\n Processing data...')
-        self.data_train, self.data_valid = utils.process_data(X, y) 
-        
+        self.data_train, self.data_valid = utils.process_data(X, y)
+
         print('\n building a model...')
         self.buildModel()
 
+        self.isBuilt=True
+
+    def fit(self, X=None, y=None):
+        '''  ------------------------------------------------------------------------------
+                                         DATA PROCESSING
+        ------------------------------------------------------------------------------ '''
+        rebuild = False;
+        if(not self.isBuilt):
+            self.data_train, self.data_valid = utils.process_data(X, y)
+            rebuild=True
+        elif(not X is None or not y is None):
+            print('\n Processing data...')
+            new_data_train, new_data_valid = utils.process_data(X, y)
+            print(type(self.data_train))
+            print(type(new_data_train))
+            if(self.data_train.shape[1:]!=new_data_train.shape[1:] or self.data_valid.shape[1:]!=new_data_valid.shape[1:]):
+                print('\n Data shape changed, building a new model...')
+                self.data_train, self.data_valid = new_data_train, new_data_valid
+                rebuild=True
+        else: # possibly different data that has the same shape, no rebuild required
+            self.data_train, self.data_valid = new_data_train, new_data_valid
+
+        if(rebuild):
+            self.buildModel();
+            self.isBuilt=True;
         '''  -------------------------------------------------------------------------------
                         GOOGLE COLAB 
         ------------------------------------------------------------------------------------- '''
@@ -103,11 +126,17 @@ class AE_BASE():
                         TRAIN THE MODEL
         ------------------------------------------------------------------------------------- '''
 
-        if(self.flags.train):
-            print('\n training a model...')
-            self.model.train(self.data_train, self.data_valid, enable_es=self.flags.early_stopping)
 
-        
+        print('\n training a model...')
+        self.model.train(self.data_train, self.data_valid, enable_es=self.flags.early_stopping)
+
+    def test(self,X):
+        if(not self.isBuilt):
+            print("Connot evaluate an unbuilt model")
+            return;
+        data= utils.process_data_nosplit(X);
+        self.model.test(data)
+
     def buildModel(self):
         '''  ------------------------------------------------------------------------------
                                      SET NETWORK PARAMS
@@ -138,7 +167,7 @@ class AE_BASE():
 
     def zipExperiments(self):
         import zipfile as zf
-        zipf = zf.ZipFile(self.config.model_name+'.zip', 'w', zf.ZIP_DEFLATED)
+        zipf = zf.ZipFile(self.config.model_name+self.config.revision_hash+'.zip', 'w', zf.ZIP_DEFLATED)
         self.zipdir(self.experiments_root_dir+'/', zipf)
         zipf.close()
 

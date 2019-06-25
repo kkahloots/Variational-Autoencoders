@@ -22,7 +22,7 @@ from .AECNN_graph import AECNNGraph
 
 from utils.logger import Logger
 from utils.early_stopping import EarlyStopping
-from tqdm import tqdm
+from tqdm import tqdm_notebook as tqdm
 import sys
 from collections import defaultdict
 

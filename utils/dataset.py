@@ -14,7 +14,7 @@ class Dataset:
         self.num_channels = data.shape[3]
         self._idx_batch = 0
         self._idx_vector = da.array(range(self._ndata))
-
+        self.shape = data.shape;
     @property
     def x(self):
         return self._x

@@ -64,6 +64,41 @@ def prepare_dataset(X):
 
     return X
 
+def process_data_nosplit(X, y=None, test_size=0.20, dummies=False):
+    if y is None:
+        y = da.ones(X.shape[0])
+    y_uniqs = np.unique(y)
+
+    len_ = X.shape[0]
+    X = prepare_dataset(X)
+
+    if dummies:
+        y = dd.get_dummies(y)
+
+    shape_ = list(X.shape[1:])
+
+    samples = list()
+    for _ in range(10):
+        for y_uniq in y_uniqs:
+            sample = list()
+            for xa, ya in zip(chunks(X, 10),chunks(y, 10)):
+                try:
+                    sample.append([xa[ya == y_uniq][random.randint(0, len(xa[ya == y_uniq]) - 1)]])
+                    if len(sample) >= 500:
+                        break
+                except:
+                    pass
+            samples += sample
+    samples = da.vstack(samples)
+
+    _X = X.reshape([X.shape[0]] + shape_)
+
+    dataset = Dataset(_X, y)
+
+    dataset.samples = samples
+    print('Sample dataset shape: ', dataset.samples.shape)
+    return dataset
+
 
 def process_data(X, y=None, test_size=0.20, dummies=False):
     if y is None:

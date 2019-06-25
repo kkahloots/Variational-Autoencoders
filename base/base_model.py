@@ -51,3 +51,5 @@ class BaseModel:
     def train(self):
         raise NotImplementedError
 
+    def evaluate(self):
+        raise NotImplementedError

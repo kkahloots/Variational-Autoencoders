@@ -10,7 +10,7 @@ VAECNN = 3
 tol = 1e-8
 min_lr = 1e-8
 epsilon = 1e-8
-SAVE_EPOCH=20
+SAVE_EPOCH=5
 
 def get_model_name(model, config):
     if model in ['AE', 'AECNN']:

@@ -5,7 +5,7 @@ __copyright__   = "Copyright 2019, Only for professionals"
 from base.base_graph import BaseGraph
 import tensorflow as tf
 import numpy as np
-from tqdm import tqdm
+from tqdm import tqdm_notebook as tqdm
 import utils.constants as const
 
 from networks.dense_net import DenseNet

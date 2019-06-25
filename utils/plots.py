@@ -3,7 +3,7 @@ import numpy as np
 import random
 
 import pandas as pd
-from tqdm import tqdm
+from tqdm import tqdm_notebook as tqdm
 from skimage import util 
 
 import gc
@@ -109,6 +109,7 @@ def plot_dataset3d(X, y, save=None):
     gc.collect()
 
 def plot_dataset(X, y, images=None, labels=None, gray=False, save=None, y_original=None):
+    print("Plotting Dataset")
     plt.cla()
     print('data size {}'.format(X.shape))
     uni_y = len(np.unique(y))
@@ -169,7 +170,10 @@ def plot_dataset(X, y, images=None, labels=None, gray=False, save=None, y_origin
     gc.collect()
 
 def plot_samples(samples, scale=10, save=None):
-
+    print(samples)
+    print(type(samples))
+    samples.clip(0,1);
+    print("Plotting Samples...")
     im = merge(samples, (10,10))
 
     fig_width = int(im.shape[0] * scale)

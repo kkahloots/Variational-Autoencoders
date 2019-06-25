@@ -22,7 +22,7 @@ from .VAECNN_graph import VAECNNGraph
 
 from utils.logger import Logger
 from utils.early_stopping import EarlyStopping
-from tqdm import tqdm
+from tqdm import tqdm_notebook as tqdm
 import sys
 from collections import defaultdict
 
@@ -221,15 +221,77 @@ class VAEModel(BaseModel):
                         self.push_colab()
 
             self.save(session, saver, self.model_graph.global_step_tensor.eval(session))
-            if self.plot:
-                self.generate_samples(data_train, session, cur_epoch)
-
-            if self.clustering:
-                self.generate_clusters(logger, cur_epoch, data_train, data_valid)
 
             if self.colab:
                 self.push_colab()
         return
+
+
+    def test (self, data):
+        with tf.Session(graph=self.graph) as session:
+            tf.set_random_seed(1234)
+
+            logger = Logger(session, self.summary_dir)
+            # here you initialize the tensorflow saver that will be used in saving the checkpoints.
+            # max_to_keep: defaults to keeping the 5 most recent checkpoints of your model
+            saver = tf.train.Saver()
+            self.session = session
+            try:
+                num_epochs_trained=self.model_graph.cur_epoch_tensor.eval(session)
+            except:
+                if (self.load(session, saver)):
+                    num_epochs_trained = self.model_graph.cur_epoch_tensor.eval(session)
+                    print('EPOCHS trained: ', num_epochs_trained)
+
+                vae_val, ae_val, recons_val, kl_val, L2_loss_val = self.valid_epoch(session, logger, data)
+
+                print('VALID | VAE Loss: ', vae_val, 'AE Loss: ', ae_val, ' | Recons: ', recons_val)
+                print('      | KL-div: ', kl_val, ' | L2_loss: ', L2_loss_val)
+
+                session.run(self.model_graph.increment_cur_epoch_tensor)
+
+            if self.plot:
+                self.generate_samples(data, session, 0)
+
+        return
+
+    def evaluate(self, data_valid):
+
+        with tf.Session(graph=self.graph) as session:
+            tf.set_random_seed(1234)
+
+            logger = Logger(session, self.summary_dir)
+            # here you initialize the tensorflow saver that will be used in saving the checkpoints.
+            # max_to_keep: defaults to keeping the 5 most recent checkpoints of your model
+            saver = tf.train.Saver()
+            self.session = session
+            try:
+                num_epochs_trained=self.model_graph.cur_epoch_tensor.eval(session)
+            except:
+                if (self.load(session, saver)):
+                    num_epochs_trained = self.model_graph.cur_epoch_tensor.eval(session)
+                    print('EPOCHS trained: ', num_epochs_trained)
+
+            if(num_epochs_trained ==  self.epochs):
+                return
+
+            for cur_epoch in range(num_epochs_trained, self.epochs + 1, 1):
+
+                print('EPOCH: ', cur_epoch)
+                self.current_epoch = cur_epoch
+
+                vae_val, ae_val, recons_val, kl_val, L2_loss_val = self.valid_epoch(session, logger, data_valid)
+
+                print('VALID | VAE Loss: ', vae_val, 'AE Loss: ', ae_val, ' | Recons: ', recons_val)
+                print('      | KL-div: ', kl_val, ' | L2_loss: ', L2_loss_val)
+
+                session.run(self.model_graph.increment_cur_epoch_tensor)
+
+            if self.plot:
+                self.generate_samples(data_valid, session, cur_epoch)
+
+        return
+
 
     '''  
     ------------------------------------------------------------------------------
@@ -422,7 +484,7 @@ class VAEModel(BaseModel):
         print('Ploting W space ...')
         w_space = self.summary_dir + '/{} W space in epoch {}.jpg'.format(self.summary_dir.split('/')[-1:][0], cur_epoch)
         self.w_space_files.append(w_space)
-
+        print(w_space)
         plot_dataset(W_pca.compute(), y=data.labels, save=w_space)
 
         pca = PCA(n_components=3)
@@ -443,7 +505,7 @@ class VAEModel(BaseModel):
         x_recons_l = self.reconst(data.samples)
         recons_file = self.summary_dir+'/{} samples generation in epoch {}.jpg'.format(self.summary_dir.split('/')[-1:][0], cur_epoch)
         self.recons_files.append(recons_file)
-        plot_samples(x_recons_l, scale=10, save=recons_file)
+        #plot_samples(x_recons_l, scale=10, save=recons_file)
         
         del x_recons_l
         gc.collect()
@@ -461,7 +523,7 @@ class VAEModel(BaseModel):
                 print('EPOCHS trained: ', num_epochs_trained)
             else:
                 return
-                
+
             output_l = list()
             
             start=0
